@@ -1,0 +1,35 @@
+- hosts: "all"
+  tasks: 
+   - name: Pull a Docker Image
+     docker_image: 
+        name: nginx
+        tag: latest
+        source: pull
+     register: z
+
+   - name: Checking Pull Status
+     debug: 
+       var: z
+
+   - name: Creating a Persistent Volume Dir
+     file:
+       path: "/home/ec2-user"
+       state: directory
+
+   - name: Copying the HTML code in the Directory
+     copy: 
+       src: "/home/ec2-user/index.html"
+       dest: "/home/ec2-user"
+
+   - name: Launching a Nginx Container
+     when: z.failed == false
+     docker_container:
+       name: nginx-server
+       image: nginx
+       state: started
+       exposed_ports:
+         - "80"
+       ports:
+         - "8888:80"
+       volumes: 
+         - /home/ec2-user:/usr/share/nginx/html
